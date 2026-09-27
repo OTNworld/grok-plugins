@@ -8,8 +8,8 @@
   "plugins": [
     {
       "name": "grok-build-worker",
-      "description": "Async one-shot code implementation via local stdio MCP (submit_job, status, fetch_artifacts, cancel_job)",
-      "version": "1.1.5",
+      "description": "Local stdio MCP for one-shot Grok Build jobs (submit_job, status, fetch_artifacts, cancel_job)",
+      "version": "1.1.6",
       "category": "development",
       "tags": ["build", "mcp", "grok"],
       "source": { "type": "local", "path": "./plugins/grok-build-worker" }
