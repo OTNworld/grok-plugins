@@ -9,7 +9,7 @@
     {
       "name": "grok-build-worker",
       "description": "Local stdio MCP for one-shot Grok Build jobs (submit_job, status, fetch_artifacts, cancel_job)",
-      "version": "1.5.0",
+      "version": "1.5.1",
       "category": "development",
       "tags": ["build", "mcp", "grok"],
       "source": { "type": "local", "path": "./plugins/grok-build-worker" }

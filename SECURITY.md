@@ -8,7 +8,7 @@ Default `mode` is `review_readonly`: read tools only.
 
 `plan_only` is plan-scoped (`--permission-mode plan`). `build` uses the host Grok permission defaults. The plugin never emits `--always-approve`. `permission_mode` values `bypassPermissions`, `bypass`, and `dontAsk` are rejected.
 
-Runtime is `node mcp/server.js`. No npm, no third-party MCP SDK.
+Runtime is `node mcp/server.js`. No npm, no third-party MCP SDK. Stdio is MCP NDJSON (legacy Content-Length still accepted).
 
 ## Network
 

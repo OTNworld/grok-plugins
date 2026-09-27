@@ -6,48 +6,74 @@ import path from "node:path";
 
 const serverPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "server.js");
 
-function send(child, msg) {
+function spawnServer() {
+  return spawn(process.execPath, [serverPath], {
+    stdio: ["pipe", "pipe", "pipe"],
+    env: { ...process.env, GROK_BUILD_JOBS_ROOT: "/tmp/grok-build-worker-test-jobs" },
+  });
+}
+
+function sendLine(child, msg) {
+  child.stdin.write(JSON.stringify(msg) + "\n");
+}
+
+function sendContentLength(child, msg) {
   const body = Buffer.from(JSON.stringify(msg), "utf8");
   child.stdin.write(`Content-Length: ${body.length}\r\n\r\n`);
   child.stdin.write(body);
 }
 
-function readOne(child, timeoutMs = 3000) {
+function readLine(child, timeoutMs = 3000) {
   return new Promise((resolve, reject) => {
-    let buf = Buffer.alloc(0);
+    let buf = "";
     const t = setTimeout(() => reject(new Error("timeout")), timeoutMs);
     const onData = (chunk) => {
-      buf = Buffer.concat([buf, chunk]);
-      const idx = buf.indexOf("\r\n\r\n");
-      if (idx === -1) return;
-      const m = buf.slice(0, idx).toString("utf8").match(/Content-Length:\s*(\d+)/i);
-      if (!m) return;
-      const len = Number(m[1]);
-      const start = idx + 4;
-      if (buf.length < start + len) return;
+      buf += chunk.toString("utf8");
+      const nl = buf.indexOf("\n");
+      if (nl === -1) return;
       clearTimeout(t);
       child.stdout.off("data", onData);
-      resolve(JSON.parse(buf.slice(start, start + len).toString("utf8")));
+      resolve(JSON.parse(buf.slice(0, nl)));
     };
     child.stdout.on("data", onData);
   });
 }
 
-test("stdio initialize + tools/list names the four tools", async () => {
-  const child = spawn(process.execPath, [serverPath], {
-    stdio: ["pipe", "pipe", "pipe"],
-    env: { ...process.env, GROK_BUILD_JOBS_ROOT: "/tmp/grok-build-worker-test-jobs" },
-  });
+test("NDJSON initialize + tools/list", async () => {
+  const child = spawnServer();
   try {
-    send(child, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } });
-    const init = await readOne(child);
+    sendLine(child, {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { protocolVersion: "2025-06-18" },
+    });
+    const init = await readLine(child);
     assert.equal(init.id, 1);
     assert.equal(init.result.serverInfo.name, "Grok build worker");
-    send(child, { jsonrpc: "2.0", method: "notifications/initialized" });
-    send(child, { jsonrpc: "2.0", id: 2, method: "tools/list" });
-    const listed = await readOne(child);
+    assert.equal(init.result.capabilities.tools.listChanged, false);
+    sendLine(child, { jsonrpc: "2.0", method: "notifications/initialized" });
+    sendLine(child, { jsonrpc: "2.0", id: 2, method: "tools/list" });
+    const listed = await readLine(child);
     const names = listed.result.tools.map((t) => t.name).sort();
     assert.deepEqual(names, ["cancel_job", "fetch_artifacts", "status", "submit_job"]);
+  } finally {
+    child.kill("SIGKILL");
+  }
+});
+
+test("legacy Content-Length initialize still works", async () => {
+  const child = spawnServer();
+  try {
+    sendContentLength(child, {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { protocolVersion: "2024-11-05" },
+    });
+    const init = await readLine(child);
+    assert.equal(init.id, 1);
+    assert.equal(init.result.serverInfo.name, "Grok build worker");
   } finally {
     child.kill("SIGKILL");
   }

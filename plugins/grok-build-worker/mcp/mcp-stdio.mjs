@@ -1,25 +1,24 @@
 /**
- * Minimal MCP stdio: JSON-RPC 2.0 + Content-Length framing.
- * No SDK. Tools are { name, description, inputSchema, handler }.
+ * Minimal MCP stdio: JSON-RPC 2.0.
+ * Write: one JSON object per line (MCP 2025-06-18 stdio).
+ * Read: NDJSON or legacy Content-Length frames.
  */
 import { Buffer } from "node:buffer";
 
 export function jsonResult(obj, isError = false) {
   return {
     content: [{ type: "text", text: JSON.stringify(obj, null, 2) }],
-    ...(isError ? { isError: true } : {}),
+    isError: Boolean(isError),
   };
 }
 
 function writeMessage(msg) {
-  const json = JSON.stringify(msg);
-  const body = Buffer.from(json, "utf8");
-  process.stdout.write(`Content-Length: ${body.length}\r\n\r\n`);
-  process.stdout.write(body);
+  process.stdout.write(JSON.stringify(msg) + "\n");
 }
 
 export function serveMcp({ name, version, tools }) {
   const byName = new Map(tools.map((t) => [t.name, t]));
+  let initialized = false;
 
   function respond(id, result) {
     writeMessage({ jsonrpc: "2.0", id, result });
@@ -34,16 +33,37 @@ export function serveMcp({ name, version, tools }) {
     if (!method) return;
 
     if (method === "initialize") {
+      initialized = true;
       respond(id, {
         protocolVersion: params?.protocolVersion || "2025-06-18",
-        capabilities: { tools: { listChanged: false } },
+        capabilities: {
+          tools: { listChanged: false },
+          prompts: { listChanged: false },
+          resources: { listChanged: false },
+        },
         serverInfo: { name, version },
       });
       return;
     }
-    if (method === "notifications/initialized" || method === "initialized") return;
+    if (method === "notifications/initialized" || method === "initialized") {
+      initialized = true;
+      return;
+    }
+    if (method === "notifications/cancelled") return;
     if (method === "ping") {
       if (id !== undefined) respond(id, {});
+      return;
+    }
+    if (method === "logging/setLevel") {
+      if (id !== undefined) respond(id, {});
+      return;
+    }
+    if (method === "prompts/list") {
+      respond(id, { prompts: [] });
+      return;
+    }
+    if (method === "resources/list") {
+      respond(id, { resources: [] });
       return;
     }
     if (method === "tools/list") {
@@ -75,32 +95,50 @@ export function serveMcp({ name, version, tools }) {
     if (id !== undefined) fail(id, -32601, `unknown method: ${method}`);
   }
 
+  function takeNdjson(buf) {
+    const nl = buf.indexOf("\n");
+    if (nl === -1) return { buf, msg: null };
+    const line = buf.slice(0, nl).toString("utf8").replace(/\r$/, "").trim();
+    buf = buf.slice(nl + 1);
+    if (!line || line[0] !== "{") return { buf, msg: null };
+    return { buf, msg: JSON.parse(line) };
+  }
+
+  function takeContentLength(buf) {
+    const headerEnd = buf.indexOf("\r\n\r\n");
+    if (headerEnd === -1) return { buf, msg: undefined };
+    const header = buf.slice(0, headerEnd).toString("utf8");
+    const m = header.match(/Content-Length:\s*(\d+)/i);
+    if (!m) return { buf: buf.slice(headerEnd + 4), msg: null };
+    const len = Number(m[1]);
+    const start = headerEnd + 4;
+    if (buf.length < start + len) return { buf, msg: undefined };
+    const body = buf.slice(start, start + len).toString("utf8");
+    return { buf: buf.slice(start + len), msg: JSON.parse(body) };
+  }
+
   let buf = Buffer.alloc(0);
   process.stdin.on("data", (chunk) => {
     buf = Buffer.concat([buf, chunk]);
-    while (true) {
-      const headerEnd = buf.indexOf("\r\n\r\n");
-      if (headerEnd === -1) break;
-      const header = buf.slice(0, headerEnd).toString("utf8");
-      const m = header.match(/Content-Length:\s*(\d+)/i);
-      if (!m) {
-        buf = buf.slice(headerEnd + 4);
-        continue;
-      }
-      const len = Number(m[1]);
-      const start = headerEnd + 4;
-      if (buf.length < start + len) break;
-      const body = buf.slice(start, start + len).toString("utf8");
-      buf = buf.slice(start + len);
+    while (buf.length) {
+      const looksHeader = buf.slice(0, Math.min(buf.length, 16)).toString("utf8").toLowerCase().startsWith("content-length");
+      let next;
       try {
-        handle(JSON.parse(body));
+        next = looksHeader ? takeContentLength(buf) : takeNdjson(buf);
       } catch (e) {
         writeMessage({
           jsonrpc: "2.0",
           id: null,
           error: { code: -32700, message: e.message || "parse error" },
         });
+        buf = Buffer.alloc(0);
+        break;
       }
+      if (next.msg === undefined) break; // need more bytes
+      buf = next.buf;
+      if (next.msg) handle(next.msg);
+      if (!looksHeader && next.msg === null && buf.indexOf("\n") === -1) break;
+      if (!looksHeader && next.msg === null) continue;
     }
   });
   process.stdin.on("end", () => process.exit(0));

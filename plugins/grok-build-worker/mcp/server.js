@@ -492,4 +492,4 @@ const TOOLS = [
   },
 ];
 
-serveMcp({ name: "Grok build worker", version: "1.5.0", tools: TOOLS });
+serveMcp({ name: "Grok build worker", version: "1.5.1", tools: TOOLS });
