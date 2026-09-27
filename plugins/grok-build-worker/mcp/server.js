@@ -15,7 +15,7 @@ import { buildGrokArgs, resolveJobOptions } from "./args.mjs";
 import { assertJobId, defaultWorkspaceRoot, resolveJobsRoot, resolveWorkCwd } from "./guard.mjs";
 
 const JOBS_ROOT = resolveJobsRoot();
-const GROK_BIN = process.env.GROK_BIN || path.join(process.env.HOME || "/home/box", ".grok/bin/grok");
+const GROK_BIN = process.env.GROK_BIN || path.join(process.env.HOME || "", ".grok/bin/grok");
 const LOCK_PATH = path.join(JOBS_ROOT, ".lock");
 const LOG_MAX_LINES = 80;
 const CANCEL_GRACE_MS = 2000;
@@ -444,7 +444,7 @@ server.registerTool(
       permission_mode: z
         .string()
         .optional()
-        .describe("Override permission mode (skips profile always-approve when set)"),
+        .describe("Override permission mode (plan | default | ...). bypassPermissions is rejected."),
       tools_allow: stringOrStringArray
         .optional()
         .describe("Allowlist of tools (comma string or array) → --tools"),

@@ -6,7 +6,7 @@
 
 Default `mode` is `review_readonly`: read tools only.
 
-`plan_only` is plan-scoped (`--permission-mode plan`). `build` uses the host Grok permission defaults. The plugin never adds `--permission-mode bypassPermissions` or `--always-approve` by itself. Pass `permission_mode` only if you want an explicit override.
+`plan_only` is plan-scoped (`--permission-mode plan`). `build` uses the host Grok permission defaults. The plugin never emits `--always-approve`. `permission_mode` values `bypassPermissions`, `bypass`, and `dontAsk` are rejected.
 
 On first MCP start, `mcp/run.mjs` runs `npm ci --omit=dev` in `mcp/` if `node_modules` is missing. That uses only the shipped `package-lock.json`.
 
@@ -29,7 +29,7 @@ None. The plugin does not read `~/.ssh`, `.env`, or tokens to send them anywhere
 
 - No secrets, PATs, or host inventories in this repository.
 - Do not open a PR that weakens the UUID / cwd guards without a matching SECURITY.md change.
-- Do not restore implicit bypass / `--always-approve` on any profile.
+- Do not restore bypass / `--always-approve` on any profile.
 - Do not add a postinstall that fetches and executes remote code.
 - No hooks.json.
 

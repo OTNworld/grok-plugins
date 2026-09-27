@@ -4,7 +4,7 @@ Local stdio MCP plugin that runs one-shot Grok Build jobs on the host.
 
 **Tools:** `submit_job`, `status`, `fetch_artifacts`, `cancel_job`
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 ## Install
 
@@ -13,7 +13,7 @@ grok plugin marketplace add OTNworld/grok-plugins
 grok plugin install grok-build-worker --trust
 ```
 
-`--trust` starts a local MCP. Default job mode is `review_readonly`. `build` uses host Grok permissions (no implicit bypass). See [SECURITY.md](../../SECURITY.md).
+`--trust` starts a local MCP. Default job mode is `review_readonly`. `build` uses host Grok permissions. `bypassPermissions` is rejected. See [SECURITY.md](../../SECURITY.md).
 
 ## MCP start
 

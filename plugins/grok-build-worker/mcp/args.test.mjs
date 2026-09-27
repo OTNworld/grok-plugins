@@ -22,14 +22,28 @@ test("explicit build has no implicit bypass", () => {
   assert.equal(argv.includes("--always-approve"), false);
 });
 
-test("permission_mode opt-in still passed", () => {
+test("permission_mode default still passed", () => {
+  const opts = resolveJobOptions({
+    goal: "implement x",
+    cwd: "/tmp",
+    mode: "build",
+    permission_mode: "default",
+  });
+  const argv = buildGrokArgs({ ...opts, cwd: "/tmp" });
+  assert.ok(argv.includes("--permission-mode"));
+  assert.ok(argv.includes("default"));
+  assert.equal(argv.includes("bypassPermissions"), false);
+});
+
+test("nuclear permission_mode is rejected", () => {
   const opts = resolveJobOptions({
     goal: "implement x",
     cwd: "/tmp",
     mode: "build",
     permission_mode: "bypassPermissions",
   });
-  const argv = buildGrokArgs({ ...opts, cwd: "/tmp" });
-  assert.ok(argv.includes("bypassPermissions"));
-  assert.equal(argv.includes("--always-approve"), false);
+  assert.throws(
+    () => buildGrokArgs({ ...opts, cwd: "/tmp" }),
+    /not offered/
+  );
 });

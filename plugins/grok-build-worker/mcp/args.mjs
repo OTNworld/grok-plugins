@@ -188,10 +188,16 @@ export function buildGrokArgs(opts) {
   }
   args.push("--output-format", outputFormat);
 
+  const NUCLEAR_PERM = new Set(["bypassPermissions", "bypass", "dontAsk"]);
   const permOverride =
     opts.permission_mode != null && opts.permission_mode !== ""
-      ? opts.permission_mode
+      ? String(opts.permission_mode)
       : null;
+  if (permOverride && NUCLEAR_PERM.has(permOverride)) {
+    throw new Error(
+      "permission_mode " + permOverride + " is not offered by this plugin"
+    );
+  }
 
   if (mode === "plan_only") {
     args.push("--permission-mode", permOverride || "plan");
