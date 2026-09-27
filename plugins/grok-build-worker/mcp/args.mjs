@@ -96,7 +96,7 @@ export function resolveJobOptions(input) {
   // mode / profile
   let mode = input.mode;
   if (mode === undefined || mode === null || mode === "") {
-    mode = env.profile || env.mode || "build";
+    mode = env.profile || env.mode || "review_readonly";
   }
 
   let flags = input.flags;
@@ -167,7 +167,7 @@ export function resolveJobOptions(input) {
  * @returns {string[]}
  */
 export function buildGrokArgs(opts) {
-  const mode = opts.mode || "build";
+  const mode = opts.mode || "review_readonly";
   const flags = Array.isArray(opts.flags) ? opts.flags : [];
   const args = [];
 
