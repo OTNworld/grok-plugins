@@ -1,10 +1,10 @@
 {
   "name": "grok-build-worker",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Stdio MCP server for Grok build worker (submit_job, status, fetch_artifacts, cancel_job)",
   "main": "server.js",
   "scripts": {
-    "test": "node --test guard.test.mjs"
+    "test": "node --test guard.test.mjs args.test.mjs"
   },
   "keywords": [],
   "author": "OTNworld",
