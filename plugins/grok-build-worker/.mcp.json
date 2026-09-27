@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "grok-build-worker": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.js"]
+      "command": "sh",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/run.sh"]
     }
   }
 }

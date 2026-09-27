@@ -4,7 +4,7 @@ Local stdio MCP plugin that runs one-shot Grok Build jobs on the host.
 
 **Tools:** `submit_job`, `status`, `fetch_artifacts`, `cancel_job`
 
-**Version:** 1.1.2
+**Version:** 1.1.3
 
 ## Install (public marketplace)
 
@@ -17,23 +17,15 @@ grok plugin install grok-build-worker --trust
 
 Then enable the plugin if your config keeps plugins off by default (`[plugins].enabled` or the Plugins UI).
 
-## First-time MCP deps
+## MCP deps
 
-The MCP server ships source under `mcp/` without `node_modules`. After install (or after updating the plugin):
+The first start runs `npm ci --omit=dev` from `mcp/package-lock.json` via `mcp/run.sh`. Node.js 18+ and `npm` must be on PATH. Re-run happens only if `mcp/node_modules` is missing.
 
-```bash
-# Plugin root is shown by `grok plugin details grok-build-worker`
-cd "$(dirname "$(find ~/.grok -path '*grok-build-worker/mcp/package.json' 2>/dev/null | head -1)")"
-npm ci
-```
-
-Requires Node.js 18+ on PATH. The `.mcp.json` runs:
+The `.mcp.json` runs:
 
 ```text
-node ${CLAUDE_PLUGIN_ROOT}/mcp/server.js
+sh ${CLAUDE_PLUGIN_ROOT}/mcp/run.sh
 ```
-
-(`${CLAUDE_PLUGIN_ROOT}` / `${GROK_PLUGIN_ROOT}` is substituted by the plugin loader.)
 
 ## Skills
 

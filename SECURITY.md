@@ -8,6 +8,8 @@ Default `mode` (1.1.2+) is `review_readonly`: read tools only, no `--permission-
 
 `plan_only` is plan-scoped. `build` is the write job: it still runs `grok -p` with `--permission-mode bypassPermissions` and `--always-approve`. Pass `mode: "build"` only when you want that.
 
+On first MCP start (1.1.3+), `mcp/run.sh` runs `npm ci --omit=dev` in `mcp/` if `node_modules` is missing. That uses only the shipped `package-lock.json`. It does not download extra scripts.
+
 ## Boundaries (1.1.1+)
 
 - `job_id` must be a UUID. Path fragments are rejected.
@@ -19,5 +21,6 @@ Default `mode` (1.1.2+) is `review_readonly`: read tools only, no `--permission-
 - No secrets, PATs, or host inventories in this repository.
 - Do not open a PR that weakens the UUID / cwd guards without a matching SECURITY.md change.
 - Do not restore bypass as the implicit default.
+- Do not add a postinstall that fetches and executes remote code.
 
 Report issues on the public repo. Do not attach credentials.
