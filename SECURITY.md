@@ -4,9 +4,9 @@
 
 ## What the plugin can do
 
-In default `build` mode the server runs `grok -p` with `--permission-mode bypassPermissions` and `--always-approve`. That is a full implement-and-write job on the resolved working directory.
+Default `mode` (1.1.2+) is `review_readonly`: read tools only, no `--permission-mode bypassPermissions`, no `--always-approve`.
 
-`review_readonly` and `plan_only` are narrower. Pass `mode` explicitly when you do not want a write job.
+`plan_only` is plan-scoped. `build` is the write job: it still runs `grok -p` with `--permission-mode bypassPermissions` and `--always-approve`. Pass `mode: "build"` only when you want that.
 
 ## Boundaries (1.1.1+)
 
@@ -18,5 +18,6 @@ In default `build` mode the server runs `grok -p` with `--permission-mode bypass
 
 - No secrets, PATs, or host inventories in this repository.
 - Do not open a PR that weakens the UUID / cwd guards without a matching SECURITY.md change.
+- Do not restore bypass as the implicit default.
 
 Report issues on the public repo. Do not attach credentials.
