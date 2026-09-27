@@ -8,12 +8,11 @@ Default `mode` is `review_readonly`: read tools only.
 
 `plan_only` is plan-scoped (`--permission-mode plan`). `build` uses the host Grok permission defaults. The plugin never emits `--always-approve`. `permission_mode` values `bypassPermissions`, `bypass`, and `dontAsk` are rejected.
 
-Runtime is `node mcp/dist/server.mjs`. No `npm ci` at start. Sources remain in-repo; the bundle is rebuilt in CI.
+Runtime is `node mcp/server.js`. No npm, no third-party MCP SDK.
 
 ## Network
 
-- Runtime: local `node` + local `grok`. No telemetry endpoint.
-- Dev/CI only: npm registry when rebuilding `dist/server.mjs`.
+- Runtime: local `node` + local `grok`. No telemetry endpoint. No npm registry.
 
 ## Credentials
 

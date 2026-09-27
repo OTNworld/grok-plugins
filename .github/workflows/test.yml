@@ -16,11 +16,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: plugins/grok-build-worker/mcp/package-lock.json
-      - run: npm ci
       - run: npm test
-      - run: npm run build
-      - name: dist is committed
-        working-directory: .
-        run: git diff --exit-code -- plugins/grok-build-worker/mcp/dist/server.mjs

@@ -8,11 +8,9 @@ import { randomUUID } from "node:crypto";
 import { spawn, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
 import { buildGrokArgs, resolveJobOptions } from "./args.mjs";
 import { assertJobId, defaultWorkspaceRoot, resolveJobsRoot, resolveWorkCwd } from "./guard.mjs";
+import { jsonResult, serveMcp } from "./mcp-stdio.mjs";
 
 const JOBS_ROOT = resolveJobsRoot();
 const GROK_BIN = process.env.GROK_BIN || path.join(process.env.HOME || "", ".grok/bin/grok");
@@ -288,7 +286,6 @@ function boundedReceipt(id) {
   };
 }
 
-const stringOrStringArray = z.union([z.string(), z.array(z.string())]);
 
 function startJob(raw) {
   const lock = activeLock();
@@ -398,209 +395,101 @@ function startJob(raw) {
   return { ok: true, job_id };
 }
 
-const server = new McpServer({
-  name: "Grok build worker",
-  version: "1.1.1",
-});
-
-server.registerTool(
-  "submit_job",
+const TOOLS = [
   {
+    name: "submit_job",
     description:
-      "Queue one async Grok Build job on this VM. Returns {job_id}. One job at a time. " +
-      "Optional mode/profile: build | review_readonly | plan_only. Optional flags and CLI overrides.",
+      "Queue one async Grok Build job on this VM. Returns {job_id}. One job at a time.",
     inputSchema: {
-      goal: z.string().describe("Build goal / prompt for grok -p (may embed [GROK_BUILD_ENVELOPE])"),
-      cwd: z
-        .string()
-        .optional()
-        .describe("Working directory under the workspace root (or GROK_BUILD_CWD_ROOT). Default: /workspace if present, else process.cwd()"),
-      mode: z
-        .enum(["build", "review_readonly", "plan_only"])
-        .optional()
-        .describe("Profile: review_readonly (default) | plan_only | build (write opt-in)"),
-      flags: z
-        .array(z.string())
-        .optional()
-        .describe(
-          "Capability flag ids: no_web, no_subagents, no_plan, structured, worktree, sandbox, resume, rules_extra"
-        ),
-      model: z.string().optional().describe("Model id (-m)"),
-      effort: z.string().optional().describe("Reasoning effort (--reasoning-effort)"),
-      max_turns: z.number().optional().describe("Max agent turns (--max-turns)"),
-      worktree: z
-        .string()
-        .optional()
-        .describe("Worktree name, or empty string for unnamed (--worktree)"),
-      worktree_ref: z.string().optional().describe("Base ref for worktree (--worktree-ref)"),
-      sandbox: z.string().optional().describe("Sandbox profile (--sandbox)"),
-      agent: z.string().optional().describe("Agent name or definition path (--agent)"),
-      resume: z
-        .string()
-        .optional()
-        .describe("Session id for -r, or literal 'continue' for -c"),
-      rules: z.string().optional().describe("Extra rules text (--rules)"),
-      json_schema: z.string().optional().describe("JSON schema string (--json-schema; implies json output)"),
-      permission_mode: z
-        .string()
-        .optional()
-        .describe("Override permission mode (plan | default | ...). bypassPermissions is rejected."),
-      tools_allow: stringOrStringArray
-        .optional()
-        .describe("Allowlist of tools (comma string or array) → --tools"),
-      tools_deny: stringOrStringArray
-        .optional()
-        .describe("Denylist of tools (comma string or array) → --disallowed-tools"),
-      output_format: z
-        .string()
-        .optional()
-        .describe("Output format (default plain; json if structured/json_schema)"),
+      type: "object",
+      properties: {
+        goal: { type: "string" },
+        cwd: { type: "string" },
+        mode: { type: "string", enum: ["build", "review_readonly", "plan_only"] },
+        flags: { type: "array", items: { type: "string" } },
+        model: { type: "string" },
+        effort: { type: "string" },
+        max_turns: { type: "number" },
+        worktree: { type: "string" },
+        worktree_ref: { type: "string" },
+        sandbox: { type: "string" },
+        agent: { type: "string" },
+        resume: { type: "string" },
+        rules: { type: "string" },
+        json_schema: { type: "string" },
+        permission_mode: { type: "string" },
+        tools_allow: {},
+        tools_deny: {},
+        output_format: { type: "string" },
+      },
+      required: ["goal"],
+    },
+    handler(params) {
+      const result = startJob(params);
+      if (!result.ok) return jsonResult({ error: result.error }, true);
+      return jsonResult({ job_id: result.job_id });
     },
   },
-  async (params) => {
-    const result = startJob(params);
-    if (!result.ok) {
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: result.error }, null, 2) }],
-        isError: true,
-      };
-    }
-    return {
-      content: [{ type: "text", text: JSON.stringify({ job_id: result.job_id }, null, 2) }],
-    };
-  }
-);
-
-server.registerTool(
-  "status",
   {
-    description: "Job status: running | done | failed | cancelled, plus a short log excerpt.",
+    name: "status",
+    description: "Job status plus a short log excerpt.",
     inputSchema: {
-      job_id: z.string().describe("Job id from submit_job"),
+      type: "object",
+      properties: { job_id: { type: "string" } },
+      required: ["job_id"],
     },
-  },
-  async ({ job_id }) => {
-    try {
+    handler({ job_id }) {
       job_id = assertJobId(job_id);
-    } catch (e) {
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: e.message }, null, 2) }],
-        isError: true,
-      };
-    }
-    const meta = readMeta(job_id);
-    if (!meta) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              { error: `unknown job_id: ${job_id}`, status: "failed" },
-              null,
-              2
-            ),
-          },
-        ],
-        isError: true,
-      };
-    }
-    // heal stale running
-    if (meta.status === "running" && meta.pid) {
-      try {
-        process.kill(meta.pid, 0);
-      } catch {
-        finalizeJob(job_id, 1, meta.cwd || defaultWorkspaceRoot(), "");
-        Object.assign(meta, readMeta(job_id) || {});
+      const meta = readMeta(job_id);
+      if (!meta) return jsonResult({ error: `unknown job_id: ${job_id}`, status: "failed" }, true);
+      if (meta.status === "running" && meta.pid) {
+        try { process.kill(meta.pid, 0); }
+        catch {
+          finalizeJob(job_id, 1, meta.cwd || defaultWorkspaceRoot(), "");
+          Object.assign(meta, readMeta(job_id) || {});
+        }
       }
-    }
-    const body = {
-      job_id,
-      status: meta.status,
-      excerpt: excerptLog(job_id, 20),
-      started_at: meta.started_at,
-      finished_at: meta.finished_at,
-      exit_code: meta.exit_code ?? null,
-      mode: meta.mode,
-      argv: truncateArgv(meta.argv),
-    };
-    return { content: [{ type: "text", text: JSON.stringify(body, null, 2) }] };
-  }
-);
-
-server.registerTool(
-  "fetch_artifacts",
-  {
-    description:
-      "Bounded receipt for a job: diffstat, ≤80 log lines, artifact paths, argv (truncated).",
-    inputSchema: {
-      job_id: z.string().describe("Job id from submit_job"),
+      return jsonResult({
+        job_id,
+        status: meta.status,
+        excerpt: excerptLog(job_id, 20),
+        started_at: meta.started_at,
+        finished_at: meta.finished_at,
+        exit_code: meta.exit_code ?? null,
+        mode: meta.mode,
+        argv: truncateArgv(meta.argv),
+      });
     },
   },
-  async ({ job_id }) => {
-    try {
-      job_id = assertJobId(job_id);
-    } catch (e) {
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: e.message }, null, 2) }],
-        isError: true,
-      };
-    }
-    if (!readMeta(job_id)) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ error: `unknown job_id: ${job_id}` }, null, 2),
-          },
-        ],
-        isError: true,
-      };
-    }
-    const receipt = boundedReceipt(job_id);
-    return { content: [{ type: "text", text: JSON.stringify(receipt, null, 2) }] };
-  }
-);
-
-server.registerTool(
-  "cancel_job",
   {
-    description:
-      "Cancel a running job by id. Sends SIGTERM to the process group, then SIGKILL after a short grace. " +
-      "Marks status cancelled and clears the one-job lock.",
+    name: "fetch_artifacts",
+    description: "Bounded receipt: diffstat, log excerpt, artifact paths.",
     inputSchema: {
-      job_id: z.string().describe("Job id from submit_job"),
+      type: "object",
+      properties: { job_id: { type: "string" } },
+      required: ["job_id"],
+    },
+    handler({ job_id }) {
+      job_id = assertJobId(job_id);
+      if (!readMeta(job_id)) return jsonResult({ error: `unknown job_id: ${job_id}` }, true);
+      return jsonResult(boundedReceipt(job_id));
     },
   },
-  async ({ job_id }) => {
-    try {
+  {
+    name: "cancel_job",
+    description: "Cancel a running job. SIGTERM then SIGKILL.",
+    inputSchema: {
+      type: "object",
+      properties: { job_id: { type: "string" } },
+      required: ["job_id"],
+    },
+    async handler({ job_id }) {
       job_id = assertJobId(job_id);
-    } catch (e) {
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: e.message }, null, 2) }],
-        isError: true,
-      };
-    }
-    const result = await cancelJob(job_id);
-    if (!result.ok) {
-      return {
-        content: [{ type: "text", text: JSON.stringify({ error: result.error }, null, 2) }],
-        isError: true,
-      };
-    }
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(
-            { job_id: result.job_id, status: result.status, note: result.note },
-            null,
-            2
-          ),
-        },
-      ],
-    };
-  }
-);
+      const result = await cancelJob(job_id);
+      if (!result.ok) return jsonResult({ error: result.error }, true);
+      return jsonResult({ job_id: result.job_id, status: result.status, note: result.note });
+    },
+  },
+];
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+serveMcp({ name: "Grok build worker", version: "1.5.0", tools: TOOLS });

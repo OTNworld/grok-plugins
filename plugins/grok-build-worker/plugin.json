@@ -1,6 +1,6 @@
 {
   "name": "grok-build-worker",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Local stdio MCP for one-shot Grok Build jobs (submit_job, status, fetch_artifacts, cancel_job)",
   "author": { "name": "OTNworld" },
   "homepage": "https://github.com/OTNworld/grok-plugins",
