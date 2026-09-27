@@ -4,7 +4,7 @@ Local stdio MCP plugin that runs one-shot Grok Build jobs on the host.
 
 **Tools:** `submit_job`, `status`, `fetch_artifacts`, `cancel_job`
 
-**Version:** 1.1.1
+**Version:** 1.1.2
 
 ## Install (public marketplace)
 
@@ -13,7 +13,7 @@ grok plugin marketplace add BotOTNworld/grok-plugins
 grok plugin install grok-build-worker --trust
 ```
 
-`--trust` starts a local MCP that can spawn `grok` with write permissions in `build` mode. See the repo [SECURITY.md](../../SECURITY.md).
+`--trust` starts a local MCP. Default job mode is `review_readonly` (no write). Pass `mode: "build"` for implement-and-write. See the repo [SECURITY.md](../../SECURITY.md).
 
 Then enable the plugin if your config keeps plugins off by default (`[plugins].enabled` or the Plugins UI).
 
