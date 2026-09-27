@@ -1,12 +1,14 @@
 # OTNworld Grok plugins
 
-Grok CLI plugin marketplace for the OTNworld org.
+Public Grok CLI plugin marketplace for OTNworld.
 
 ## Add the marketplace
 
 ```bash
-grok plugin marketplace add OTNworld/grok-plugins
+grok plugin marketplace add BotOTNworld/grok-plugins
 ```
+
+Public install source: `BotOTNworld/grok-plugins`. The org copy `OTNworld/grok-plugins` is private.
 
 ## Install a plugin
 
@@ -14,7 +16,7 @@ grok plugin marketplace add OTNworld/grok-plugins
 grok plugin install grok-build-worker --trust
 ```
 
-`--trust` is required for the plugin’s MCP server and skills to activate.
+`--trust` is required for the plugin’s MCP server and skills to activate. It runs a **local** stdio MCP that can spawn `grok` on this machine. Read [SECURITY.md](SECURITY.md) before trusting it.
 
 Refresh / list:
 
@@ -29,9 +31,9 @@ grok plugin details grok-build-worker
 
 | Name | Version | Description |
 |------|---------|-------------|
-| `grok-build-worker` | 1.1.0 | Local stdio MCP for async one-shot build/review/plan jobs |
+| `grok-build-worker` | 1.1.1 | Local stdio MCP for async one-shot build/review/plan jobs |
 
-See [`plugins/grok-build-worker/README.md`](plugins/grok-build-worker/README.md) for MCP `npm install` and skill notes.
+See [`plugins/grok-build-worker/README.md`](plugins/grok-build-worker/README.md) for MCP `npm ci` and skill notes.
 
 ## Layout
 
@@ -41,7 +43,7 @@ plugins/grok-build-worker/
   plugin.json
   .mcp.json
   README.md
-  mcp/          # stdio server source (run npm install here)
+  mcp/          # stdio server source (run npm ci here)
   skills/
 ```
 
@@ -53,12 +55,8 @@ Packaging the same plugin for the **Cursor** marketplace is a separate later pat
 
 ```bash
 grok plugin validate ./plugins/grok-build-worker
+cd plugins/grok-build-worker/mcp && npm ci && npm test
 ```
-
-## Readable MCP mirror
-
-A public staging mirror with unminified `mcp/server.js` and full `package-lock.json` is at
-[`BotOTNworld/grok-plugins`](https://github.com/BotOTNworld/grok-plugins). Prefer installing from this org marketplace (`OTNworld/grok-plugins`).
 
 ## License
 
