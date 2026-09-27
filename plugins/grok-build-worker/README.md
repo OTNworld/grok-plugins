@@ -4,12 +4,12 @@ Local stdio MCP plugin that runs one-shot Grok Build jobs on the host.
 
 **Tools:** `submit_job`, `status`, `fetch_artifacts`, `cancel_job`
 
-**Version:** 1.1.4
+**Version:** 1.1.5
 
 ## Install (public marketplace)
 
 ```bash
-grok plugin marketplace add BotOTNworld/grok-plugins
+grok plugin marketplace add OTNworld/grok-plugins
 grok plugin install grok-build-worker --trust
 ```
 

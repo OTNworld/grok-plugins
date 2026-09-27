@@ -5,10 +5,10 @@ Public Grok CLI plugin marketplace for OTNworld.
 ## Add the marketplace
 
 ```bash
-grok plugin marketplace add BotOTNworld/grok-plugins
+grok plugin marketplace add OTNworld/grok-plugins
 ```
 
-Public install source: `BotOTNworld/grok-plugins`. The org copy `OTNworld/grok-plugins` is private.
+Install source: `OTNworld/grok-plugins`.
 
 ## Install a plugin
 
@@ -31,7 +31,7 @@ grok plugin details grok-build-worker
 
 | Name | Version | Description |
 |------|---------|-------------|
-| `grok-build-worker` | 1.1.4 | Local stdio MCP for async one-shot build/review/plan jobs |
+| `grok-build-worker` | 1.1.5 | Local stdio MCP for async one-shot build/review/plan jobs |
 
 See [`plugins/grok-build-worker/README.md`](plugins/grok-build-worker/README.md) for MCP start (`run.sh` / `npm ci`) and skill notes.
 
