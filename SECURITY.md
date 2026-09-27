@@ -8,12 +8,12 @@ Default `mode` is `review_readonly`: read tools only.
 
 `plan_only` is plan-scoped (`--permission-mode plan`). `build` uses the host Grok permission defaults. The plugin never emits `--always-approve`. `permission_mode` values `bypassPermissions`, `bypass`, and `dontAsk` are rejected.
 
-On first MCP start, `mcp/run.mjs` runs `npm ci --omit=dev` in `mcp/` if `node_modules` is missing. That uses only the shipped `package-lock.json`.
+Runtime is `node mcp/dist/server.mjs`. No `npm ci` at start. Sources remain in-repo; the bundle is rebuilt in CI.
 
 ## Network
 
-- First start only: `npm ci` talks to the npm registry for the two lockfile packages (`@modelcontextprotocol/sdk`, `zod`).
-- After that: local `node` + local `grok`. No telemetry endpoint.
+- Runtime: local `node` + local `grok`. No telemetry endpoint.
+- Dev/CI only: npm registry when rebuilding `dist/server.mjs`.
 
 ## Credentials
 

@@ -1,11 +1,12 @@
 {
   "name": "grok-build-worker",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Stdio MCP server for Grok build worker (submit_job, status, fetch_artifacts, cancel_job)",
   "main": "server.js",
   "scripts": {
     "test": "node --test guard.test.mjs args.test.mjs",
-    "start": "node run.mjs"
+    "build": "esbuild server.js --bundle --platform=node --format=esm --outfile=dist/server.mjs --legal-comments=inline",
+    "start": "node dist/server.mjs"
   },
   "keywords": [],
   "author": "OTNworld",
@@ -15,5 +16,8 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.1",
     "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
   }
 }

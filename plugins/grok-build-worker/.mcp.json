@@ -2,7 +2,7 @@
   "mcpServers": {
     "grok-build-worker": {
       "command": "node",
-      "args": ["${GROK_PLUGIN_ROOT}/mcp/run.mjs"]
+      "args": ["${GROK_PLUGIN_ROOT}/mcp/dist/server.mjs"]
     }
   }
 }
