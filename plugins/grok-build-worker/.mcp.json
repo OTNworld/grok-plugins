@@ -2,7 +2,7 @@
   "mcpServers": {
     "grok-build-worker": {
       "command": "sh",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/run.sh"]
+      "args": ["${GROK_PLUGIN_ROOT}/mcp/run.sh"]
     }
   }
 }

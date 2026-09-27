@@ -4,7 +4,7 @@ Local stdio MCP plugin that runs one-shot Grok Build jobs on the host.
 
 **Tools:** `submit_job`, `status`, `fetch_artifacts`, `cancel_job`
 
-**Version:** 1.1.3
+**Version:** 1.1.4
 
 ## Install (public marketplace)
 
@@ -24,8 +24,10 @@ The first start runs `npm ci --omit=dev` from `mcp/package-lock.json` via `mcp/r
 The `.mcp.json` runs:
 
 ```text
-sh ${CLAUDE_PLUGIN_ROOT}/mcp/run.sh
+sh ${GROK_PLUGIN_ROOT}/mcp/run.sh
 ```
+
+(`GROK_PLUGIN_ROOT` is the Grok loader path. `CLAUDE_PLUGIN_ROOT` remains the compatibility alias.)
 
 ## Skills
 
