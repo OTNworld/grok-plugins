@@ -341,7 +341,7 @@ function startJob(raw) {
     goal: resolved.goal,
     goal_raw: raw.goal,
     cwd: workCwd,
-    mode: resolved.mode || "build",
+    mode: resolved.mode || "review_readonly",
     flags: resolved.flags || [],
     options: {
       model: resolved.model ?? null,
@@ -418,7 +418,7 @@ server.registerTool(
       mode: z
         .enum(["build", "review_readonly", "plan_only"])
         .optional()
-        .describe("Profile: build (default) | review_readonly | plan_only"),
+        .describe("Profile: review_readonly (default) | plan_only | build (write opt-in)"),
       flags: z
         .array(z.string())
         .optional()
