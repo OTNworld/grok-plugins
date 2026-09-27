@@ -31,7 +31,7 @@ grok plugin details grok-build-worker
 
 | Name | Version | Description |
 |------|---------|-------------|
-| `grok-build-worker` | 1.1.1 | Local stdio MCP for async one-shot build/review/plan jobs |
+| `grok-build-worker` | 1.1.2 | Local stdio MCP for async one-shot build/review/plan jobs |
 
 See [`plugins/grok-build-worker/README.md`](plugins/grok-build-worker/README.md) for MCP `npm ci` and skill notes.
 
