@@ -4,7 +4,7 @@ Local stdio MCP plugin that runs one-shot Grok Build jobs on the host.
 
 **Tools:** `submit_job`, `status`, `fetch_artifacts`, `cancel_job`
 
-**Version:** 1.1.6
+**Version:** 1.2.0
 
 ## Install
 
@@ -13,11 +13,11 @@ grok plugin marketplace add OTNworld/grok-plugins
 grok plugin install grok-build-worker --trust
 ```
 
-`--trust` starts a local MCP. Default job mode is `review_readonly` (no write). Pass `mode: "build"` for implement-and-write. See [SECURITY.md](../../SECURITY.md).
+`--trust` starts a local MCP. Default job mode is `review_readonly`. `build` uses host Grok permissions (no implicit bypass). See [SECURITY.md](../../SECURITY.md).
 
 ## MCP start
 
-`.mcp.json` runs `node ${GROK_PLUGIN_ROOT}/mcp/run.mjs`. First start runs `npm ci --omit=dev` from the shipped lockfile if `node_modules` is missing. Node.js 18+ and `npm` on PATH.
+`.mcp.json` runs `node ${GROK_PLUGIN_ROOT}/mcp/run.mjs`. First start runs `npm ci --omit=dev` from the shipped lockfile if `node_modules` is missing.
 
 Network: npm registry on that first start only (`@modelcontextprotocol/sdk`, `zod`). No other endpoints. No plugin credentials.
 

@@ -14,10 +14,22 @@ test("default argv has no bypassPermissions", () => {
   assert.equal(argv.includes("--always-approve"), false);
 });
 
-test("explicit build still bypasses", () => {
+test("explicit build has no implicit bypass", () => {
   const opts = resolveJobOptions({ goal: "implement x", cwd: "/tmp", mode: "build" });
   const argv = buildGrokArgs({ ...opts, cwd: "/tmp" });
   assert.equal(opts.mode, "build");
+  assert.equal(argv.includes("bypassPermissions"), false);
+  assert.equal(argv.includes("--always-approve"), false);
+});
+
+test("permission_mode opt-in still passed", () => {
+  const opts = resolveJobOptions({
+    goal: "implement x",
+    cwd: "/tmp",
+    mode: "build",
+    permission_mode: "bypassPermissions",
+  });
+  const argv = buildGrokArgs({ ...opts, cwd: "/tmp" });
   assert.ok(argv.includes("bypassPermissions"));
-  assert.ok(argv.includes("--always-approve"));
+  assert.equal(argv.includes("--always-approve"), false);
 });

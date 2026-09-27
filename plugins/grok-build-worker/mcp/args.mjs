@@ -93,7 +93,6 @@ export function resolveJobOptions(input) {
     return undefined;
   };
 
-  // mode / profile
   let mode = input.mode;
   if (mode === undefined || mode === null || mode === "") {
     mode = env.profile || env.mode || "review_readonly";
@@ -112,7 +111,6 @@ export function resolveJobOptions(input) {
       ? parseMaybeNumber(input.max_turns)
       : parseMaybeNumber(env.max_turns);
 
-  // worktree: allow explicit empty string (unnamed)
   let worktree;
   if (input.worktree !== undefined && input.worktree !== null) {
     worktree = String(input.worktree);
@@ -181,8 +179,6 @@ export function buildGrokArgs(opts) {
   args.push("-p", opts.goal);
   args.push("--cwd", opts.cwd);
 
-  // Output format: default plain; structured flag or json_schema → json
-  // Explicit output_format always wins.
   const wantStructured =
     hasFlag(flags, "structured") ||
     (opts.json_schema != null && opts.json_schema !== "");
@@ -192,7 +188,6 @@ export function buildGrokArgs(opts) {
   }
   args.push("--output-format", outputFormat);
 
-  // Profile permission defaults
   const permOverride =
     opts.permission_mode != null && opts.permission_mode !== ""
       ? opts.permission_mode
@@ -204,24 +199,14 @@ export function buildGrokArgs(opts) {
     if (permOverride) {
       args.push("--permission-mode", permOverride);
     }
-    // no bypass / always-approve
-  } else {
-    // build (default)
-    if (permOverride) {
-      args.push("--permission-mode", permOverride);
-      // override skips always-approve
-    } else {
-      args.push("--permission-mode", "bypassPermissions");
-      args.push("--always-approve");
-    }
+  } else if (permOverride) {
+    args.push("--permission-mode", permOverride);
   }
 
-  // Capability flags → argv
   if (hasFlag(flags, "no_web")) args.push("--disable-web-search");
   if (hasFlag(flags, "no_subagents")) args.push("--no-subagents");
   if (hasFlag(flags, "no_plan")) args.push("--no-plan");
 
-  // worktree: flag and/or worktree field (empty string = unnamed)
   const worktreeFieldSet =
     opts.worktree !== undefined && opts.worktree !== null;
   if (hasFlag(flags, "worktree") || worktreeFieldSet) {
@@ -235,7 +220,6 @@ export function buildGrokArgs(opts) {
     }
   }
 
-  // sandbox profile (field required for a useful flag)
   if (opts.sandbox) {
     args.push("--sandbox", String(opts.sandbox));
   }
@@ -253,20 +237,17 @@ export function buildGrokArgs(opts) {
     args.push("-r", String(opts.resume));
   }
 
-  // rules_extra flag alone does nothing without rules text
   if (opts.rules) args.push("--rules", String(opts.rules));
 
   if (opts.json_schema) {
     args.push("--json-schema", String(opts.json_schema));
   }
 
-  // tools allow / deny
   let toolsAllow = toCsv(opts.tools_allow);
   let toolsDeny = toCsv(opts.tools_deny);
 
   if (mode === "review_readonly") {
     if (!toolsAllow) toolsAllow = REVIEW_READONLY_TOOLS;
-    // Default deny only when caller did not pass tools_deny at all
     if (
       (opts.tools_deny === undefined || opts.tools_deny === null) &&
       !toolsDeny

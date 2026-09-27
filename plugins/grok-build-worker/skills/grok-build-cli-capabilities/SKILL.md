@@ -26,12 +26,12 @@ Each key is a toggle in fleet/rails config. `true` = dispatcher may use it; `fal
 
 | id | What it means | grok CLI shape (target) |
 |----|----------------|-------------------------|
-| `build` | Full implement / fix / refactor one-shot | `-p`, `--permission-mode bypassPermissions`, `--always-approve` |
-| `review_readonly` | Explain / review / find bugs, no writes | read/search tools only; no bypass |
+| `build` | Implement / fix / refactor one-shot | `-p`; host permission defaults |
+| `review_readonly` | Explain / review / find bugs, no writes | read/search tools only |
 | `plan_only` | Plan then stop | `--permission-mode plan` |
 | `worktree` | Isolated git worktree | `--worktree` [name]; optional `--worktree-ref` |
 
-`build` is the default profile. `worktree` combines with another profile.
+Default profile is `review_readonly`. `worktree` combines with another profile.
 
 ### Session / output flags (orthogonal) — default on
 
