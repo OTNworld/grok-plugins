@@ -59,7 +59,6 @@ function activeLock() {
           process.kill(meta.pid, 0);
           return lock;
         } catch {
-          // process gone but meta still running — heal
           meta.status = "failed";
           meta.finished_at = new Date().toISOString();
           meta.exit_code = meta.exit_code ?? 1;
@@ -135,7 +134,6 @@ function writeDiffArtifacts(id, workCwd, beforeSha) {
 
 function finalizeJob(id, code, workCwd, beforeSha) {
   const m = readMeta(id) || { job_id: id };
-  // Preserve explicit cancel; still clear lock / ensure diffs exist.
   if (m.status === "cancelled") {
     if (!fs.existsSync(path.join(jobDir(id), "diffstat.txt"))) {
       writeDiffArtifacts(id, workCwd || m.cwd || defaultWorkspaceRoot(), beforeSha || "");
@@ -167,7 +165,6 @@ function pidAlive(pid) {
 
 function killJobProcess(pid) {
   if (!pid) return;
-  // Prefer process-group kill (detached spawn makes child a group leader).
   try {
     process.kill(-pid, "SIGTERM");
   } catch {
@@ -285,7 +282,6 @@ function boundedReceipt(id) {
     paths: [...new Set(paths)].slice(0, 60),
   };
 }
-
 
 function startJob(raw) {
   const lock = activeLock();
@@ -492,4 +488,4 @@ const TOOLS = [
   },
 ];
 
-serveMcp({ name: "Grok build worker", version: "1.5.1", tools: TOOLS });
+serveMcp({ name: "Grok build worker", version: "1.5.2", tools: TOOLS });
