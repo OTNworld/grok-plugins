@@ -1,6 +1,6 @@
 {
   "name": "grok-build-worker",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Stdio MCP server for Grok build worker (submit_job, status, fetch_artifacts, cancel_job)",
   "main": "server.js",
   "scripts": {
